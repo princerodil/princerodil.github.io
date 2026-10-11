@@ -1,11 +1,3 @@
-Here is the updated index.html code with an expanded catalog.
-
-It adds 8 total baby products categorized across Bibs & Pacifiers, Apparel, Toys & Teethers, and Footwear & Socks, complete with updated storage handling so the new products automatically populate on fresh loads.
-
-Updated Code (index.html)
-Copy and replace everything inside your local index.html file with this updated version:
-
-HTML
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -25,6 +17,9 @@ HTML
         <div class="space-x-4 flex items-center">
             <button onclick="router('home')" class="hover:text-pink-600 font-medium">Home</button>
             <button onclick="router('catalog')" class="hover:text-pink-600 font-medium">Catalog</button>
+            <button onclick="router('cart')" class="relative hover:text-pink-600 font-medium flex items-center gap-1">
+                🛒 Cart <span id="cart-badge" class="bg-pink-600 text-white text-xs px-1.5 py-0.5 rounded-full">0</span>
+            </button>
             <span id="nav-auth-area"></span>
         </div>
     </nav>
@@ -41,7 +36,7 @@ HTML
 
     <!-- Application JavaScript Logic -->
     <script>
-        // --- EXPANDED SEED PRODUCTS DATA ---
+        // --- INITIAL PRODUCTS DATA ---
         const initialProducts = [
             { id: 1, name: 'Silicone Pacifier Clip', category: 'Bibs & Pacifiers', price: 8.99, image: 'https://images.unsplash.com/photo-1515488042361-ee00e0ddd4e4?w=500', description: 'Food-grade silicone teether clip to prevent dropped pacifiers.' },
             { id: 2, name: 'Organic Cotton Baby Beanie', category: 'Apparel', price: 12.50, image: 'https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?w=500', description: 'Soft organic cotton cap to keep newborn heads warm.' },
@@ -61,16 +56,26 @@ HTML
             ]));
         }
 
-        // Always ensure products exist in LocalStorage
         if (!localStorage.getItem('products') || JSON.parse(localStorage.getItem('products')).length < 8) {
             localStorage.setItem('products', JSON.stringify(initialProducts));
         }
 
+        if (!localStorage.getItem('cart')) {
+            localStorage.setItem('cart', JSON.stringify([]));
+        }
+
         let currentUser = JSON.parse(localStorage.getItem('currentUser')) || null;
+
+        function updateCartBadge() {
+            const cart = JSON.parse(localStorage.getItem('cart'));
+            const totalCount = cart.reduce((sum, item) => sum + item.qty, 0);
+            document.getElementById('cart-badge').innerText = totalCount;
+        }
 
         // --- ROUTER SYSTEM ---
         function router(view, param = null) {
             updateNavbar();
+            updateCartBadge();
             const app = document.getElementById('app');
             app.innerHTML = '';
 
@@ -78,6 +83,8 @@ HTML
             else if (view === 'login') renderLogin(app);
             else if (view === 'register') renderRegister(app);
             else if (view === 'catalog') renderCatalog(app);
+            else if (view === 'cart') renderCart(app);
+            else if (view === 'checkout') renderCheckout(app);
             else if (view === 'dashboard') renderDashboard(app);
             else if (view === 'edit' && param) renderEditProduct(app, param);
         }
@@ -98,6 +105,29 @@ HTML
             router('home');
         }
 
+        // --- CART FUNCTIONS ---
+        function addToCart(productId) {
+            const products = JSON.parse(localStorage.getItem('products'));
+            const product = products.find(p => p.id === productId);
+            let cart = JSON.parse(localStorage.getItem('cart'));
+
+            const existing = cart.find(item => item.id === productId);
+            if (existing) {
+                existing.qty += 1;
+            } else {
+                cart.push({ ...product, qty: 1 });
+            }
+
+            localStorage.setItem('cart', JSON.stringify(cart));
+            updateCartBadge();
+            alert(`${product.name} added to cart!`);
+        }
+
+        function buyNow(productId) {
+            addToCart(productId);
+            router('cart');
+        }
+
         // --- VIEWS ---
 
         function renderHome(container) {
@@ -111,7 +141,10 @@ HTML
                             <span class="text-xs bg-pink-100 text-pink-700 px-2 py-1 rounded font-bold">${p.category}</span>
                             <h3 class="text-md font-bold mt-2">${p.name}</h3>
                         </div>
-                        <div class="mt-3"><span class="text-lg font-extrabold text-pink-600">$${p.price.toFixed(2)}</span></div>
+                        <div class="mt-3 flex justify-between items-center">
+                            <span class="text-lg font-extrabold text-pink-600">$${p.price.toFixed(2)}</span>
+                            <button onclick="buyNow(${p.id})" class="bg-pink-600 text-white px-3 py-1 rounded text-xs font-bold hover:bg-pink-700">Buy Now</button>
+                        </div>
                     </div>
                 `;
             });
@@ -120,7 +153,7 @@ HTML
                 <div class="text-center py-10">
                     <h1 class="text-4xl font-extrabold text-slate-900 mb-4">Adorable & Safe Accessories for Little Ones</h1>
                     <p class="text-slate-600 max-w-xl mx-auto mb-8">Explore handpicked organic cotton beanies, silicone teethers, soft bibs, and booties tailored for ultimate baby comfort.</p>
-                    ${!currentUser ? `<button onclick="router('register')" class="bg-pink-600 text-white px-6 py-3 rounded-lg font-bold shadow-lg hover:bg-pink-700">Get Started Today</button>` : `<button onclick="router('catalog')" class="bg-pink-600 text-white px-6 py-3 rounded-lg font-bold shadow-lg hover:bg-pink-700">Browse Full Catalog</button>`}
+                    <button onclick="router('catalog')" class="bg-pink-600 text-white px-6 py-3 rounded-lg font-bold shadow-lg hover:bg-pink-700">Browse Full Catalog</button>
                 </div>
                 <div class="mt-8">
                     <h2 class="text-2xl font-bold mb-4 text-slate-800">Featured Essentials</h2>
@@ -213,13 +246,109 @@ HTML
                             <h3 class="text-md font-bold mt-2 text-slate-800">${p.name}</h3>
                             <p class="text-slate-500 text-xs mt-1 line-clamp-2">${p.description}</p>
                         </div>
-                        <div class="mt-4 pt-2 border-t flex justify-between items-center">
+                        <div class="mt-4 pt-2 border-t flex flex-col gap-2">
                             <span class="text-lg font-extrabold text-pink-600">$${p.price.toFixed(2)}</span>
+                            <div class="flex gap-2">
+                                <button onclick="addToCart(${p.id})" class="flex-1 bg-slate-100 text-slate-700 py-1.5 rounded text-xs font-bold hover:bg-slate-200">Add to Cart</button>
+                                <button onclick="buyNow(${p.id})" class="flex-1 bg-pink-600 text-white py-1.5 rounded text-xs font-bold hover:bg-pink-700">Buy Now</button>
+                            </div>
                         </div>
                     </div>
                 `;
             });
             container.innerHTML = html + `</div>`;
+        }
+
+        function renderCart(container) {
+            let cart = JSON.parse(localStorage.getItem('cart'));
+            if (cart.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-16 bg-white rounded-xl shadow">
+                        <h2 class="text-2xl font-bold text-slate-700 mb-2">Your Cart is Empty</h2>
+                        <p class="text-slate-500 mb-6">Explore our adorable baby accessories and add items to your cart.</p>
+                        <button onclick="router('catalog')" class="bg-pink-600 text-white px-6 py-2 rounded-lg font-bold hover:bg-pink-700">Browse Catalog</button>
+                    </div>
+                `;
+                return;
+            }
+
+            let total = 0;
+            let itemsHtml = '';
+            cart.forEach((item, index) => {
+                let subtotal = item.price * item.qty;
+                total += subtotal;
+                itemsHtml += `
+                    <tr class="border-b">
+                        <td class="p-4 flex items-center gap-3">
+                            <img src="${item.image}" class="w-12 h-12 object-cover rounded">
+                            <span class="font-bold">${item.name}</span>
+                        </td>
+                        <td class="p-4">$${item.price.toFixed(2)}</td>
+                        <td class="p-4">
+                            <button onclick="updateQty(${index}, -1)" class="px-2 bg-slate-200 rounded">-</button>
+                            <span class="px-2">${item.qty}</span>
+                            <button onclick="updateQty(${index}, 1)" class="px-2 bg-slate-200 rounded">+</button>
+                        </td>
+                        <td class="p-4 font-bold">$${subtotal.toFixed(2)}</td>
+                        <td class="p-4"><button onclick="removeItem(${index})" class="text-red-500 text-sm hover:underline">Remove</button></td>
+                    </tr>
+                `;
+            });
+
+            container.innerHTML = `
+                <h2 class="text-3xl font-bold text-pink-600 mb-6">Shopping Cart</h2>
+                <div class="bg-white rounded-xl shadow overflow-x-auto mb-6">
+                    <table class="w-full text-left border-collapse">
+                        <thead><tr class="bg-slate-100 text-slate-600 text-sm"><th class="p-4">Product</th><th class="p-4">Price</th><th class="p-4">Quantity</th><th class="p-4">Subtotal</th><th class="p-4">Action</th></tr></thead>
+                        <tbody>${itemsHtml}</tbody>
+                    </table>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow flex justify-between items-center max-w-xl ml-auto">
+                    <div>
+                        <p class="text-sm text-slate-500">Total Amount:</p>
+                        <p class="text-3xl font-extrabold text-pink-600">$${total.toFixed(2)}</p>
+                    </div>
+                    <button onclick="router('checkout')" class="bg-pink-600 text-white px-8 py-3 rounded-lg font-bold hover:bg-pink-700 shadow">Proceed to Checkout</button>
+                </div>
+            `;
+        }
+
+        function updateQty(index, change) {
+            let cart = JSON.parse(localStorage.getItem('cart'));
+            cart[index].qty += change;
+            if (cart[index].qty <= 0) {
+                cart.splice(index, 1);
+            }
+            localStorage.setItem('cart', JSON.stringify(cart));
+            router('cart');
+        }
+
+        function removeItem(index) {
+            let cart = JSON.parse(localStorage.getItem('cart'));
+            cart.splice(index, 1);
+            localStorage.setItem('cart', JSON.stringify(cart));
+            router('cart');
+        }
+
+        function renderCheckout(container) {
+            container.innerHTML = `
+                <div class="max-w-xl mx-auto bg-white p-8 rounded-xl shadow">
+                    <h2 class="text-2xl font-bold text-pink-600 mb-6">Secure Checkout</h2>
+                    <form onsubmit="handleCheckout(event)" class="space-y-4">
+                        <div><label class="block text-sm font-bold">Full Name</label><input type="text" required class="w-full border p-2 rounded mt-1" placeholder="Parent Name"></div>
+                        <div><label class="block text-sm font-bold">Shipping Address</label><textarea required class="w-full border p-2 rounded mt-1" placeholder="House No, Street, Barangay, City"></textarea></div>
+                        <div><label class="block text-sm font-bold">Payment Method</label><select class="w-full border p-2 rounded mt-1"><option>Cash on Delivery (COD)</option><option>GCash / Online Transfer</option><option>Credit Card</option></select></div>
+                        <button type="submit" class="w-full bg-pink-600 text-white py-3 rounded-lg font-bold hover:bg-pink-700 shadow">Complete Order</button>
+                    </form>
+                </div>
+            `;
+        }
+
+        function handleCheckout(e) {
+            e.preventDefault();
+            localStorage.setItem('cart', JSON.stringify([]));
+            alert('🎉 Order placed successfully! Thank you for shopping with TinyTots Accessories.');
+            router('catalog');
         }
 
         function renderDashboard(container) {
