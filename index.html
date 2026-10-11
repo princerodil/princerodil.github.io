@@ -1,3 +1,11 @@
+Here is the updated index.html code with an expanded catalog.
+
+It adds 8 total baby products categorized across Bibs & Pacifiers, Apparel, Toys & Teethers, and Footwear & Socks, complete with updated storage handling so the new products automatically populate on fresh loads.
+
+Updated Code (index.html)
+Copy and replace everything inside your local index.html file with this updated version:
+
+HTML
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -22,7 +30,7 @@
     </nav>
 
     <!-- Main Dynamic Content Container -->
-    <main class="flex-grow container mx-auto px-4 py-8 max-w-5xl">
+    <main class="flex-grow container mx-auto px-4 py-8 max-w-6xl">
         <div id="app"></div>
     </main>
 
@@ -33,7 +41,19 @@
 
     <!-- Application JavaScript Logic -->
     <script>
-        // --- INITIAL DATA & LOCALSTORAGE SETUP ---
+        // --- EXPANDED SEED PRODUCTS DATA ---
+        const initialProducts = [
+            { id: 1, name: 'Silicone Pacifier Clip', category: 'Bibs & Pacifiers', price: 8.99, image: 'https://images.unsplash.com/photo-1515488042361-ee00e0ddd4e4?w=500', description: 'Food-grade silicone teether clip to prevent dropped pacifiers.' },
+            { id: 2, name: 'Organic Cotton Baby Beanie', category: 'Apparel', price: 12.50, image: 'https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?w=500', description: 'Soft organic cotton cap to keep newborn heads warm.' },
+            { id: 3, name: 'Waterproof Bandana Bibs Set', category: 'Bibs & Pacifiers', price: 15.99, image: 'https://images.unsplash.com/photo-1596461404969-9ae70f2830c1?w=500', description: 'Absorbent organic cotton bandana bibs with adjustable snaps.' },
+            { id: 4, name: 'Wooden Ring Plush Teether', category: 'Toys & Teethers', price: 9.75, image: 'https://images.unsplash.com/photo-1515488042361-ee00e0ddd4e4?w=500', description: 'Natural beechwood ring with knitted animal face for teething relief.' },
+            { id: 5, name: 'Non-Slip Baby Booties', category: 'Footwear & Socks', price: 14.20, image: 'https://images.unsplash.com/photo-1519689680058-324335c77eba?w=500', description: 'Soft fleece booties with snap closures that stay secure on tiny feet.' },
+            { id: 6, name: 'Sensory Crinkle Baby Toy', category: 'Toys & Teethers', price: 11.00, image: 'https://images.unsplash.com/photo-1596461404969-9ae70f2830c1?w=500', description: 'High-contrast tactile toy designed for early sensory development.' },
+            { id: 7, name: 'Scratch Mittens Set (3-Pack)', category: 'Apparel', price: 10.50, image: 'https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?w=500', description: '100% gentle cotton mittens designed to protect soft skin from scratches.' },
+            { id: 8, name: 'Knitted Knee-High Socks', category: 'Footwear & Socks', price: 8.50, image: 'https://images.unsplash.com/photo-1519689680058-324335c77eba?w=500', description: 'Cozy breathable knitted socks for infants and toddlers.' }
+        ];
+
+        // --- LOCALSTORAGE SETUP ---
         if (!localStorage.getItem('users')) {
             localStorage.setItem('users', JSON.stringify([
                 { name: 'Store Admin', email: 'admin@tinytots.com', password: 'admin123', role: 'admin' },
@@ -41,11 +61,9 @@
             ]));
         }
 
-        if (!localStorage.getItem('products')) {
-            localStorage.setItem('products', JSON.stringify([
-                { id: 1, name: 'Silicone Pacifier Clip', category: 'Bibs & Pacifiers', price: 8.99, image: 'https://images.unsplash.com/photo-1515488042361-ee00e0ddd4e4?w=500', description: 'Food-grade silicone teether clip.' },
-                { id: 2, name: 'Organic Cotton Baby Beanie', category: 'Apparel', price: 12.50, image: 'https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?w=500', description: 'Soft organic cotton cap for warmth.' }
-            ]));
+        // Always ensure products exist in LocalStorage
+        if (!localStorage.getItem('products') || JSON.parse(localStorage.getItem('products')).length < 8) {
+            localStorage.setItem('products', JSON.stringify(initialProducts));
         }
 
         let currentUser = JSON.parse(localStorage.getItem('currentUser')) || null;
@@ -83,11 +101,30 @@
         // --- VIEWS ---
 
         function renderHome(container) {
+            const products = JSON.parse(localStorage.getItem('products')).slice(0, 3);
+            let featuredCards = '';
+            products.forEach(p => {
+                featuredCards += `
+                    <div class="bg-white rounded-xl shadow p-4 flex flex-col justify-between">
+                        <img src="${p.image}" class="h-40 w-full object-cover rounded-lg mb-3">
+                        <div>
+                            <span class="text-xs bg-pink-100 text-pink-700 px-2 py-1 rounded font-bold">${p.category}</span>
+                            <h3 class="text-md font-bold mt-2">${p.name}</h3>
+                        </div>
+                        <div class="mt-3"><span class="text-lg font-extrabold text-pink-600">$${p.price.toFixed(2)}</span></div>
+                    </div>
+                `;
+            });
+
             container.innerHTML = `
-                <div class="text-center py-12">
+                <div class="text-center py-10">
                     <h1 class="text-4xl font-extrabold text-slate-900 mb-4">Adorable & Safe Accessories for Little Ones</h1>
-                    <p class="text-slate-600 max-w-xl mx-auto mb-8">Handpicked organic cotton beanies, silicone teethers, soft bibs, and tiny mittens tailored for ultimate baby comfort.</p>
+                    <p class="text-slate-600 max-w-xl mx-auto mb-8">Explore handpicked organic cotton beanies, silicone teethers, soft bibs, and booties tailored for ultimate baby comfort.</p>
                     ${!currentUser ? `<button onclick="router('register')" class="bg-pink-600 text-white px-6 py-3 rounded-lg font-bold shadow-lg hover:bg-pink-700">Get Started Today</button>` : `<button onclick="router('catalog')" class="bg-pink-600 text-white px-6 py-3 rounded-lg font-bold shadow-lg hover:bg-pink-700">Browse Full Catalog</button>`}
+                </div>
+                <div class="mt-8">
+                    <h2 class="text-2xl font-bold mb-4 text-slate-800">Featured Essentials</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">${featuredCards}</div>
                 </div>
             `;
         }
@@ -101,7 +138,11 @@
                         <div><label class="block text-sm font-bold">Password</label><input type="password" id="login-password" required class="w-full border p-2 rounded mt-1"></div>
                         <button type="submit" class="w-full bg-pink-600 text-white py-2 rounded font-bold hover:bg-pink-700">Login</button>
                     </form>
-                    <p class="text-xs text-slate-400 mt-4 text-center">Test Admin: admin@tinytots.com / admin123</p>
+                    <div class="text-xs text-slate-500 mt-6 bg-slate-50 p-3 rounded border">
+                        <p class="font-bold">Test Credentials:</p>
+                        <p>• Admin: admin@tinytots.com / admin123</p>
+                        <p>• Customer: jane@example.com / user123</p>
+                    </div>
                 </div>
             `;
         }
@@ -156,17 +197,25 @@
 
         function renderCatalog(container) {
             const products = JSON.parse(localStorage.getItem('products'));
-            let html = `<h2 class="text-3xl font-bold mb-6 text-pink-600">Product Catalog</h2><div class="grid grid-cols-1 md:grid-cols-3 gap-6">`;
+            let html = `
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-3xl font-bold text-pink-600">Product Catalog</h2>
+                    <span class="text-sm text-slate-500 font-medium">${products.length} Products Available</span>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
+            `;
             products.forEach(p => {
                 html += `
-                    <div class="bg-white rounded-xl shadow p-4 flex flex-col justify-between">
-                        <img src="${p.image}" class="h-48 w-full object-cover rounded-lg mb-4">
-                        <div>
+                    <div class="bg-white rounded-xl shadow p-4 flex flex-col justify-between hover:shadow-md transition">
+                        <img src="${p.image}" class="h-44 w-full object-cover rounded-lg mb-3">
+                        <div class="flex-grow">
                             <span class="text-xs bg-pink-100 text-pink-700 px-2 py-1 rounded font-bold">${p.category}</span>
-                            <h3 class="text-lg font-bold mt-2">${p.name}</h3>
-                            <p class="text-slate-600 text-sm mt-1">${p.description}</p>
+                            <h3 class="text-md font-bold mt-2 text-slate-800">${p.name}</h3>
+                            <p class="text-slate-500 text-xs mt-1 line-clamp-2">${p.description}</p>
                         </div>
-                        <div class="mt-4 flex justify-between items-center"><span class="text-xl font-extrabold text-pink-600">$${p.price.toFixed(2)}</span></div>
+                        <div class="mt-4 pt-2 border-t flex justify-between items-center">
+                            <span class="text-lg font-extrabold text-pink-600">$${p.price.toFixed(2)}</span>
+                        </div>
                     </div>
                 `;
             });
@@ -180,39 +229,49 @@
             let tableRows = '';
             products.forEach(p => {
                 tableRows += `
-                    <tr>
+                    <tr class="border-b hover:bg-slate-50">
                         <td class="p-3"><img src="${p.image}" class="w-12 h-12 object-cover rounded"></td>
-                        <td class="p-3 font-bold">${p.name}</td>
-                        <td class="p-3">${p.category}</td>
-                        <td class="p-3">$${p.price.toFixed(2)}</td>
+                        <td class="p-3 font-bold text-slate-800">${p.name}</td>
+                        <td class="p-3"><span class="text-xs bg-slate-100 px-2 py-1 rounded border">${p.category}</span></td>
+                        <td class="p-3 font-bold text-pink-600">$${p.price.toFixed(2)}</td>
                         <td class="p-3 space-x-2">
-                            <button onclick="router('edit', ${p.id})" class="bg-blue-500 text-white px-3 py-1 rounded text-sm">Edit</button>
-                            <button onclick="deleteProduct(${p.id})" class="bg-red-500 text-white px-3 py-1 rounded text-sm">Delete</button>
+                            <button onclick="router('edit', ${p.id})" class="bg-blue-500 text-white px-3 py-1 rounded text-sm hover:bg-blue-600">Edit</button>
+                            <button onclick="deleteProduct(${p.id})" class="bg-red-500 text-white px-3 py-1 rounded text-sm hover:bg-red-600">Delete</button>
                         </td>
                     </tr>
                 `;
             });
 
             container.innerHTML = `
-                <h2 class="text-3xl font-bold mb-6 text-pink-600">Admin Inventory Management</h2>
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-3xl font-bold text-pink-600">Admin Inventory Dashboard</h2>
+                    <button onclick="resetData()" class="text-xs bg-slate-200 text-slate-700 px-3 py-1.5 rounded hover:bg-slate-300">Reset Default Products</button>
+                </div>
+
                 <div class="bg-white p-6 rounded-xl shadow mb-8">
-                    <h3 class="text-xl font-bold mb-4">Add New Accessory</h3>
+                    <h3 class="text-xl font-bold mb-4 text-slate-800">Add New Accessory</h3>
                     <form onsubmit="addProduct(event)" class="space-y-4">
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <input type="text" id="add-name" placeholder="Product Name" required class="border p-2 rounded">
-                            <select id="add-category" class="border p-2 rounded"><option>Bibs & Pacifiers</option><option>Apparel</option><option>Toys & Teethers</option></select>
+                            <select id="add-category" class="border p-2 rounded">
+                                <option>Bibs & Pacifiers</option>
+                                <option>Apparel</option>
+                                <option>Toys & Teethers</option>
+                                <option>Footwear & Socks</option>
+                            </select>
                         </div>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <input type="number" step="0.01" id="add-price" placeholder="Price ($)" required class="border p-2 rounded">
                             <input type="url" id="add-image" placeholder="Image URL" required class="border p-2 rounded">
                         </div>
-                        <textarea id="add-desc" placeholder="Description" class="w-full border p-2 rounded"></textarea>
+                        <textarea id="add-desc" placeholder="Product Description" class="w-full border p-2 rounded"></textarea>
                         <button type="submit" class="bg-pink-600 text-white px-6 py-2 rounded font-bold hover:bg-pink-700">Add Product</button>
                     </form>
                 </div>
-                <div class="bg-white rounded-xl shadow overflow-hidden">
+
+                <div class="bg-white rounded-xl shadow overflow-x-auto">
                     <table class="w-full text-left border-collapse">
-                        <thead><tr class="bg-slate-100 border-b"><th class="p-3">Image</th><th class="p-3">Name</th><th class="p-3">Category</th><th class="p-3">Price</th><th class="p-3">Actions</th></tr></thead>
+                        <thead><tr class="bg-slate-100 border-b text-slate-600 text-sm"><th class="p-3">Image</th><th class="p-3">Name</th><th class="p-3">Category</th><th class="p-3">Price</th><th class="p-3">Actions</th></tr></thead>
                         <tbody>${tableRows}</tbody>
                     </table>
                 </div>
@@ -242,6 +301,13 @@
             }
         }
 
+        function resetData() {
+            if (confirm('Reset product catalog to default 8 items?')) {
+                localStorage.setItem('products', JSON.stringify(initialProducts));
+                router('dashboard');
+            }
+        }
+
         function renderEditProduct(container, id) {
             const products = JSON.parse(localStorage.getItem('products'));
             const p = products.find(prod => prod.id === id);
@@ -252,7 +318,15 @@
                     <h2 class="text-2xl font-bold mb-6 text-pink-600">Edit Product</h2>
                     <form onsubmit="handleEdit(event, ${p.id})" class="space-y-4">
                         <div><label class="block text-sm font-bold">Name</label><input type="text" id="edit-name" value="${p.name}" required class="w-full border p-2 rounded mt-1"></div>
-                        <div><label class="block text-sm font-bold">Category</label><input type="text" id="edit-cat" value="${p.category}" required class="w-full border p-2 rounded mt-1"></div>
+                        <div>
+                            <label class="block text-sm font-bold">Category</label>
+                            <select id="edit-cat" class="w-full border p-2 rounded mt-1">
+                                <option ${p.category === 'Bibs & Pacifiers' ? 'selected' : ''}>Bibs & Pacifiers</option>
+                                <option ${p.category === 'Apparel' ? 'selected' : ''}>Apparel</option>
+                                <option ${p.category === 'Toys & Teethers' ? 'selected' : ''}>Toys & Teethers</option>
+                                <option ${p.category === 'Footwear & Socks' ? 'selected' : ''}>Footwear & Socks</option>
+                            </select>
+                        </div>
                         <div><label class="block text-sm font-bold">Price ($)</label><input type="number" step="0.01" id="edit-price" value="${p.price}" required class="w-full border p-2 rounded mt-1"></div>
                         <div><label class="block text-sm font-bold">Image URL</label><input type="url" id="edit-image" value="${p.image}" required class="w-full border p-2 rounded mt-1"></div>
                         <div><label class="block text-sm font-bold">Description</label><textarea id="edit-desc" class="w-full border p-2 rounded mt-1">${p.description}</textarea></div>
