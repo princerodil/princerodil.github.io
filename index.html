@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TinyTots Accessories — Online Store</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-pink-50 text-slate-800 min-h-screen flex flex-col">
+
+    <!-- Navigation Bar -->
+    <nav class="bg-white shadow-sm px-6 py-4 flex justify-between items-center sticky top-0 z-50">
+        <a href="#" onclick="router('home')" class="text-xl font-bold text-pink-600 flex items-center gap-2">
+            👶 TinyTots Accessories
+        </a>
+        <div class="space-x-4 flex items-center">
+            <button onclick="router('home')" class="hover:text-pink-600 font-medium">Home</button>
+            <button onclick="router('catalog')" class="hover:text-pink-600 font-medium">Catalog</button>
+            <span id="nav-auth-area"></span>
+        </div>
+    </nav>
+
+    <!-- Main Dynamic Content Container -->
+    <main class="flex-grow container mx-auto px-4 py-8 max-w-5xl">
+        <div id="app"></div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t py-4 text-center text-sm text-slate-500">
+        TinyTots Accessories System &copy; 2026 | Midterm Task Performance
+    </footer>
+
+    <!-- Application JavaScript Logic -->
+    <script>
+        // --- INITIAL DATA & LOCALSTORAGE SETUP ---
+        if (!localStorage.getItem('users')) {
+            localStorage.setItem('users', JSON.stringify([
+                { name: 'Store Admin', email: 'admin@tinytots.com', password: 'admin123', role: 'admin' },
+                { name: 'Jane Doe', email: 'jane@example.com', password: 'user123', role: 'customer' }
+            ]));
+        }
+
+        if (!localStorage.getItem('products')) {
+            localStorage.setItem('products', JSON.stringify([
+                { id: 1, name: 'Silicone Pacifier Clip', category: 'Bibs & Pacifiers', price: 8.99, image: 'https://images.unsplash.com/photo-1515488042361-ee00e0ddd4e4?w=500', description: 'Food-grade silicone teether clip.' },
+                { id: 2, name: 'Organic Cotton Baby Beanie', category: 'Apparel', price: 12.50, image: 'https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?w=500', description: 'Soft organic cotton cap for warmth.' }
+            ]));
+        }
+
+        let currentUser = JSON.parse(localStorage.getItem('currentUser')) || null;
+
+        // --- ROUTER SYSTEM ---
+        function router(view, param = null) {
+            updateNavbar();
+            const app = document.getElementById('app');
+            app.innerHTML = '';
+
+            if (view === 'home') renderHome(app);
+            else if (view === 'login') renderLogin(app);
+            else if (view === 'register') renderRegister(app);
+            else if (view === 'catalog') renderCatalog(app);
+            else if (view === 'dashboard') renderDashboard(app);
+            else if (view === 'edit' && param) renderEditProduct(app, param);
+        }
+
+        function updateNavbar() {
+            const area = document.getElementById('nav-auth-area');
+            if (currentUser) {
+                let adminLink = currentUser.role === 'admin' ? `<button onclick="router('dashboard')" class="bg-pink-100 text-pink-700 px-3 py-1 rounded font-medium hover:bg-pink-200">Dashboard</button>` : '';
+                area.innerHTML = `${adminLink} <span class="font-bold text-slate-700">${currentUser.name}</span> <button onclick="logout()" class="text-red-500 font-medium hover:underline ml-2">Logout</button>`;
+            } else {
+                area.innerHTML = `<button onclick="router('login')" class="text-pink-600 font-medium">Login</button> <button onclick="router('register')" class="bg-pink-600 text-white px-4 py-2 rounded shadow hover:bg-pink-700">Register</button>`;
+            }
+        }
+
+        function logout() {
+            currentUser = null;
+            localStorage.removeItem('currentUser');
+            router('home');
+        }
+
+        // --- VIEWS ---
+
+        function renderHome(container) {
+            container.innerHTML = `
+                <div class="text-center py-12">
+                    <h1 class="text-4xl font-extrabold text-slate-900 mb-4">Adorable & Safe Accessories for Little Ones</h1>
+                    <p class="text-slate-600 max-w-xl mx-auto mb-8">Handpicked organic cotton beanies, silicone teethers, soft bibs, and tiny mittens tailored for ultimate baby comfort.</p>
+                    ${!currentUser ? `<button onclick="router('register')" class="bg-pink-600 text-white px-6 py-3 rounded-lg font-bold shadow-lg hover:bg-pink-700">Get Started Today</button>` : `<button onclick="router('catalog')" class="bg-pink-600 text-white px-6 py-3 rounded-lg font-bold shadow-lg hover:bg-pink-700">Browse Full Catalog</button>`}
+                </div>
+            `;
+        }
+
+        function renderLogin(container) {
+            container.innerHTML = `
+                <div class="max-w-md mx-auto bg-white p-8 rounded-xl shadow-md">
+                    <h2 class="text-2xl font-bold mb-6 text-center text-pink-600">Sign In</h2>
+                    <form onsubmit="handleLogin(event)" class="space-y-4">
+                        <div><label class="block text-sm font-bold">Email</label><input type="email" id="login-email" required class="w-full border p-2 rounded mt-1"></div>
+                        <div><label class="block text-sm font-bold">Password</label><input type="password" id="login-password" required class="w-full border p-2 rounded mt-1"></div>
+                        <button type="submit" class="w-full bg-pink-600 text-white py-2 rounded font-bold hover:bg-pink-700">Login</button>
+                    </form>
+                    <p class="text-xs text-slate-400 mt-4 text-center">Test Admin: admin@tinytots.com / admin123</p>
+                </div>
+            `;
+        }
+
+        function handleLogin(e) {
+            e.preventDefault();
+            const email = document.getElementById('login-email').value;
+            const pass = document.getElementById('login-password').value;
+            const users = JSON.parse(localStorage.getItem('users'));
+            const found = users.find(u => u.email === email && u.password === pass);
+
+            if (found) {
+                currentUser = found;
+                localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                router(found.role === 'admin' ? 'dashboard' : 'catalog');
+            } else {
+                alert('Invalid email or password!');
+            }
+        }
+
+        function renderRegister(container) {
+            container.innerHTML = `
+                <div class="max-w-md mx-auto bg-white p-8 rounded-xl shadow-md">
+                    <h2 class="text-2xl font-bold mb-6 text-center text-pink-600">Create Account</h2>
+                    <form onsubmit="handleRegister(event)" class="space-y-4">
+                        <div><label class="block text-sm font-bold">Full Name</label><input type="text" id="reg-name" required class="w-full border p-2 rounded mt-1"></div>
+                        <div><label class="block text-sm font-bold">Email</label><input type="email" id="reg-email" required class="w-full border p-2 rounded mt-1"></div>
+                        <div><label class="block text-sm font-bold">Password</label><input type="password" id="reg-password" required class="w-full border p-2 rounded mt-1"></div>
+                        <button type="submit" class="w-full bg-pink-600 text-white py-2 rounded font-bold hover:bg-pink-700">Register</button>
+                    </form>
+                </div>
+            `;
+        }
+
+        function handleRegister(e) {
+            e.preventDefault();
+            const name = document.getElementById('reg-name').value;
+            const email = document.getElementById('reg-email').value;
+            const password = document.getElementById('reg-password').value;
+            let users = JSON.parse(localStorage.getItem('users'));
+
+            if (users.some(u => u.email === email)) {
+                alert('Email already registered!');
+                return;
+            }
+
+            users.push({ name, email, password, role: 'customer' });
+            localStorage.setItem('users', JSON.stringify(users));
+            alert('Registration successful! Please login.');
+            router('login');
+        }
+
+        function renderCatalog(container) {
+            const products = JSON.parse(localStorage.getItem('products'));
+            let html = `<h2 class="text-3xl font-bold mb-6 text-pink-600">Product Catalog</h2><div class="grid grid-cols-1 md:grid-cols-3 gap-6">`;
+            products.forEach(p => {
+                html += `
+                    <div class="bg-white rounded-xl shadow p-4 flex flex-col justify-between">
+                        <img src="${p.image}" class="h-48 w-full object-cover rounded-lg mb-4">
+                        <div>
+                            <span class="text-xs bg-pink-100 text-pink-700 px-2 py-1 rounded font-bold">${p.category}</span>
+                            <h3 class="text-lg font-bold mt-2">${p.name}</h3>
+                            <p class="text-slate-600 text-sm mt-1">${p.description}</p>
+                        </div>
+                        <div class="mt-4 flex justify-between items-center"><span class="text-xl font-extrabold text-pink-600">$${p.price.toFixed(2)}</span></div>
+                    </div>
+                `;
+            });
+            container.innerHTML = html + `</div>`;
+        }
+
+        function renderDashboard(container) {
+            if (!currentUser || currentUser.role !== 'admin') { return router('home'); }
+            const products = JSON.parse(localStorage.getItem('products'));
+            
+            let tableRows = '';
+            products.forEach(p => {
+                tableRows += `
+                    <tr>
+                        <td class="p-3"><img src="${p.image}" class="w-12 h-12 object-cover rounded"></td>
+                        <td class="p-3 font-bold">${p.name}</td>
+                        <td class="p-3">${p.category}</td>
+                        <td class="p-3">$${p.price.toFixed(2)}</td>
+                        <td class="p-3 space-x-2">
+                            <button onclick="router('edit', ${p.id})" class="bg-blue-500 text-white px-3 py-1 rounded text-sm">Edit</button>
+                            <button onclick="deleteProduct(${p.id})" class="bg-red-500 text-white px-3 py-1 rounded text-sm">Delete</button>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            container.innerHTML = `
+                <h2 class="text-3xl font-bold mb-6 text-pink-600">Admin Inventory Management</h2>
+                <div class="bg-white p-6 rounded-xl shadow mb-8">
+                    <h3 class="text-xl font-bold mb-4">Add New Accessory</h3>
+                    <form onsubmit="addProduct(event)" class="space-y-4">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <input type="text" id="add-name" placeholder="Product Name" required class="border p-2 rounded">
+                            <select id="add-category" class="border p-2 rounded"><option>Bibs & Pacifiers</option><option>Apparel</option><option>Toys & Teethers</option></select>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <input type="number" step="0.01" id="add-price" placeholder="Price ($)" required class="border p-2 rounded">
+                            <input type="url" id="add-image" placeholder="Image URL" required class="border p-2 rounded">
+                        </div>
+                        <textarea id="add-desc" placeholder="Description" class="w-full border p-2 rounded"></textarea>
+                        <button type="submit" class="bg-pink-600 text-white px-6 py-2 rounded font-bold hover:bg-pink-700">Add Product</button>
+                    </form>
+                </div>
+                <div class="bg-white rounded-xl shadow overflow-hidden">
+                    <table class="w-full text-left border-collapse">
+                        <thead><tr class="bg-slate-100 border-b"><th class="p-3">Image</th><th class="p-3">Name</th><th class="p-3">Category</th><th class="p-3">Price</th><th class="p-3">Actions</th></tr></thead>
+                        <tbody>${tableRows}</tbody>
+                    </table>
+                </div>
+            `;
+        }
+
+        function addProduct(e) {
+            e.preventDefault();
+            let products = JSON.parse(localStorage.getItem('products'));
+            products.push({
+                id: Date.now(),
+                name: document.getElementById('add-name').value,
+                category: document.getElementById('add-category').value,
+                price: parseFloat(document.getElementById('add-price').value),
+                image: document.getElementById('add-image').value,
+                description: document.getElementById('add-desc').value
+            });
+            localStorage.setItem('products', JSON.stringify(products));
+            router('dashboard');
+        }
+
+        function deleteProduct(id) {
+            if (confirm('Are you sure you want to delete this product?')) {
+                let products = JSON.parse(localStorage.getItem('products')).filter(p => p.id !== id);
+                localStorage.setItem('products', JSON.stringify(products));
+                router('dashboard');
+            }
+        }
+
+        function renderEditProduct(container, id) {
+            const products = JSON.parse(localStorage.getItem('products'));
+            const p = products.find(prod => prod.id === id);
+            if (!p) return router('dashboard');
+
+            container.innerHTML = `
+                <div class="max-w-xl mx-auto bg-white p-8 rounded-xl shadow">
+                    <h2 class="text-2xl font-bold mb-6 text-pink-600">Edit Product</h2>
+                    <form onsubmit="handleEdit(event, ${p.id})" class="space-y-4">
+                        <div><label class="block text-sm font-bold">Name</label><input type="text" id="edit-name" value="${p.name}" required class="w-full border p-2 rounded mt-1"></div>
+                        <div><label class="block text-sm font-bold">Category</label><input type="text" id="edit-cat" value="${p.category}" required class="w-full border p-2 rounded mt-1"></div>
+                        <div><label class="block text-sm font-bold">Price ($)</label><input type="number" step="0.01" id="edit-price" value="${p.price}" required class="w-full border p-2 rounded mt-1"></div>
+                        <div><label class="block text-sm font-bold">Image URL</label><input type="url" id="edit-image" value="${p.image}" required class="w-full border p-2 rounded mt-1"></div>
+                        <div><label class="block text-sm font-bold">Description</label><textarea id="edit-desc" class="w-full border p-2 rounded mt-1">${p.description}</textarea></div>
+                        <div class="flex gap-4"><button type="submit" class="bg-pink-600 text-white px-6 py-2 rounded font-bold">Save</button><button type="button" onclick="router('dashboard')" class="bg-slate-300 px-6 py-2 rounded font-bold">Cancel</button></div>
+                    </form>
+                </div>
+            `;
+        }
+
+        function handleEdit(e, id) {
+            e.preventDefault();
+            let products = JSON.parse(localStorage.getItem('products'));
+            let index = products.findIndex(p => p.id === id);
+            if (index !== -1) {
+                products[index] = {
+                    id: id,
+                    name: document.getElementById('edit-name').value,
+                    category: document.getElementById('edit-cat').value,
+                    price: parseFloat(document.getElementById('edit-price').value),
+                    image: document.getElementById('edit-image').value,
+                    description: document.getElementById('edit-desc').value
+                };
+                localStorage.setItem('products', JSON.stringify(products));
+            }
+            router('dashboard');
+        }
+
+        // Initial Route Load
+        router('home');
+    </script>
+</body>
+</html>
